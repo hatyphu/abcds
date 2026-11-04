@@ -1,0 +1,19 @@
+{
+  "name": "kol-livestream-brain",
+  "version": "1.0.0",
+  "description": "AI brain service for a Vietnamese virtual livestream KOL avatar - takes comment/gift events, calls Claude, returns avatar control JSON",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "demo": "node src/demo.js",
+    "live": "node src/tiktokConnector.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5",
+    "tiktok-live-connector": "^1.2.1",
+    "ws": "^8.18.0"
+  }
+}

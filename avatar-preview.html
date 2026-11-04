@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>KOL Avatar Preview</title>
+<style>
+  body {
+    margin: 0;
+    background: transparent; /* transparent so OBS Browser Source can key it */
+    font-family: "Segoe UI", sans-serif;
+    color: #fff;
+  }
+  #stage {
+    width: 480px;
+    height: 640px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  #avatar-placeholder {
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffd1e8, #ff8fc7);
+    box-shadow: 0 0 40px rgba(255, 140, 200, 0.5);
+    transition: transform 0.2s ease;
+  }
+  #avatar-placeholder.talking {
+    animation: pulse 0.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  #bubble {
+    margin-top: 24px;
+    max-width: 420px;
+    min-height: 40px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 16px;
+    padding: 14px 18px;
+    font-size: 20px;
+    line-height: 1.4;
+    text-align: center;
+  }
+  #meta {
+    margin-top: 8px;
+    font-size: 13px;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="avatar-placeholder"></div>
+    <div id="bubble">Đang chờ kết nối...</div>
+    <div id="meta"></div>
+  </div>
+
+  <script>
+    // Replace ws://localhost:8081 if you changed WS_PORT in .env
+    const ws = new WebSocket("ws://localhost:8081");
+    const avatarEl = document.getElementById("avatar-placeholder");
+    const bubbleEl = document.getElementById("bubble");
+    const metaEl = document.getElementById("meta");
+
+    let audioPlayer = null;
+
+    ws.onopen = () => {
+      bubbleEl.textContent = "Đã kết nối. Đang chờ comment...";
+    };
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type !== "avatar_update") return;
+
+      const p = msg.payload;
+
+      // --- Replace this block with your real avatar rig ---
+      // p.emotion, p.emotion_intensity, p.eye_direction,
+      // p.facial_expression, p.gesture, p.voice_style,
+      // p.speaking_speed, p.pause_before_speaking all drive the rig.
+      if (p.response_needed) {
+        bubbleEl.textContent = p.speech;
+        avatarEl.classList.add("talking");
+        setTimeout(() => avatarEl.classList.remove("talking"), 2500);
+      }
+      metaEl.textContent = `${p.viewer_name || ""} | emotion: ${p.emotion} (${p.emotion_intensity}) | priority: ${p.priority}`;
+
+      // Play synthesized audio if a TTS provider is wired up in src/tts.js
+      if (msg.audioUrl) {
+        if (audioPlayer) audioPlayer.pause();
+        audioPlayer = new Audio(msg.audioUrl);
+        audioPlayer.play();
+      }
+    };
+
+    ws.onclose = () => {
+      bubbleEl.textContent = "Mất kết nối tới brain server.";
+    };
+  </script>
+</body>
+</html>
